@@ -83,13 +83,14 @@ fun app(showWindow: MutableState<Boolean>,
                                 popSub.value = "中国电信"
                                 popupState.dismiss()}, arrowType = ItemArrowType.None)
                         }
+                        ItemDivider()
                         SaltButton(
                             onClick = {
                                 login.value = true
-                                println(settings.getString("pwd",""))
                             },
                             text = "登录"
                         )
+                        ItemDivider()
                         SaltButton(
                             text = "保存账号",
                             onClick = {
@@ -102,10 +103,10 @@ fun app(showWindow: MutableState<Boolean>,
                                 windowSub.value = "账号已保存"
                             }
                         )
+                        ItemDivider()
                         SaltButton(
                             text = "开机自启",
                             onClick = {
-                                autoStartUp.isAutoStartUp()
                                 autoStartUp.makeAutoStartUp()
                             }
                         )

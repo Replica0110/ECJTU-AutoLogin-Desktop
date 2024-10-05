@@ -9,7 +9,7 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
-class LoginApi {
+class LoginService {
 
     fun login(studentID: String, passwordECJTU: String, theISP: Int): String {
         if (studentID.isEmpty()) {
@@ -29,7 +29,7 @@ class LoginApi {
             .build()
 
         val mediaType = "application/x-www-form-urlencoded".toMediaType()
-        val postBody = "DDDDD=%2C0%2C$studentID@$strTheISP&upass=$passwordECJTU&R1=0&R2=0&R3=0&R6=0&para=00&0MKKey=123456&buttonClicked=&redirect_url=&err_flag=&username=&password=&user=&cmd=&Login="
+        val postBody = "DDDDD=%2C0%2C$studentID@$strTheISP&upass=$passwordECJTU"
         val request = Request.Builder()
             .url("http://172.16.2.100:801/eportal/?c=ACSetting&a=Login&protocol=http:&hostname=172.16.2.100&iTermType=1&wlanacip=null&wlanacname=null&mac=00-00-00-00-00-00&enAdvert=0&queryACIP=0&loginMethod=1")
             .post(postBody.toRequestBody(mediaType))
@@ -47,7 +47,7 @@ class LoginApi {
                 val startIndex = location.indexOf("RetCode=") + 8
                 val endIndex = location.indexOf("&", startIndex)
                 if (startIndex >= 0 && endIndex >= 0) {
-                    return when (val extractedText = location.substring(startIndex, endIndex)) {
+                    return when (location.substring(startIndex, endIndex)) {
                         "userid error1" -> "E3 账号不存在(或未绑定宽带账号或运营商选择有误)"
                         "userid error2" -> "E3 密码错误"
                         "512" -> "E3 AC认证失败(重复登录之类的)"

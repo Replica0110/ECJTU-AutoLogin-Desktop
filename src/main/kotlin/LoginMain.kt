@@ -10,7 +10,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.lonx.ui.app
-import com.lonx.utils.LoginApi
+import com.lonx.utils.LoginService
 import com.moriafly.salt.ui.popup.rememberPopupState
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
@@ -40,6 +40,7 @@ object AppSingleton {
             Files.createFile(lockFile)
             true
         } catch (e: Exception) {
+            println(e)
             false // File already exists
         }
     }
@@ -115,27 +116,24 @@ class LoginMain {
                 if (login.value) {
                     coroutineScope.launch {
                         try {
-                            val netState = LoginApi().getState()
-                            println(netState)
+                            val netState = LoginService().getState()
                             val rstTxt = when (netState) {
                                 1 -> "您似乎没有网络连接"
-                                3 -> LoginApi().login(id.value, pwd.value, isp.value)
+                                3 -> LoginService().login(id.value, pwd.value, isp.value)
                                 4 -> "您已经处于登录状态"
                                 else -> "您连接的wifi似乎不是校园网"
                             }
-                            if (showWindow.value) {
                                 windowSub.value = rstTxt
-                            } else {
-                                trayState.sendNotification(Notification("华交校园网登录", rstTxt, Notification.Type.Info))
-                            }
+
+                                trayState.sendNotification(Notification("华交校园网登录", rstTxt, Notification.Type.None))
+
                         } catch (e: Exception) {
-                            if (showWindow.value) {
                                 windowSub.value = "登录失败，捕获到异常：$e"
-                            } else {
+
                                 trayState.sendNotification(
-                                    Notification("华交校园网登录", "登录失败，捕获到异常：$e", Notification.Type.Error)
+                                    Notification("华交校园网登录", "登录失败，捕获到异常：$e", Notification.Type.None)
                                 )
-                            }
+
                         }
                         login.value = false
                     }
@@ -146,7 +144,6 @@ class LoginMain {
                     state = trayState,
                     tooltip = "华交校园网登录",
                     onAction = {
-                        println("clicked")
                         showWindow.value = !showWindow.value
                     },
                     menu = {
