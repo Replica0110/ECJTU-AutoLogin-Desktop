@@ -13,4 +13,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "ecjtulogin"
+rootProject.name = "ECJTULoginTool"

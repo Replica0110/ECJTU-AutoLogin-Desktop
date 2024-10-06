@@ -14,6 +14,7 @@ import com.lonx.utils.LoginService
 import com.moriafly.salt.ui.popup.rememberPopupState
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import java.nio.file.Files
@@ -21,7 +22,7 @@ import java.nio.file.Path
 import java.util.prefs.Preferences
 import kotlin.system.exitProcess
 
-const val AppName = "ECJTUAutoLogin"
+const val AppName = "ECJTULoginTool"
 
 object AppSingleton {
     private val lockFile: Path = Path.of(System.getProperty("java.io.tmpdir"), "ECJTUAutoLogin.lock")
@@ -30,7 +31,6 @@ object AppSingleton {
         if (!createLockFile()) {
             // If the lock file already exists, the application is already running
             println("Application is already running.")
-            LoginMain.showMainWindow()
             exitProcess(0) // Exit the new instance
         }
     }
@@ -40,7 +40,6 @@ object AppSingleton {
             Files.createFile(lockFile)
             true
         } catch (e: Exception) {
-            println(e)
             false // File already exists
         }
     }
@@ -61,38 +60,39 @@ class LoginMain {
         private var id = mutableStateOf("")
         private var pwd = mutableStateOf("")
         private var isp = mutableStateOf(1)
+        private val loginService = LoginService()
 
         private fun initialize(settings: Settings) {
             id.value = settings.getString("id", "")
             pwd.value = settings.getString("pwd", "")
             isp.value = settings.getInt("isp", 1)
         }
-        fun showMainWindow() {
-            showWindow.value = true // 设置为显示窗口
-        }
 
         @JvmStatic
         fun main(args: Array<String>) {
             showWindow.value = true
+
             AppSingleton
 
             application {
                 val coroutineScope = rememberCoroutineScope()
-                val trayState = rememberTrayState()
                 val scrollState = remember { ScrollState(0) }
+                val trayState = rememberTrayState()
                 val settings: Settings = PreferencesSettings(Preferences.userNodeForPackage(Main::class.java))
-
+                val trayIcon = painterResource("icon.svg")
                 initialize(settings)
 
                 val windowState = rememberWindowState(
                     width = 380.dp,
-                    height = 380.dp,
+                    height = 450.dp,
                     position = WindowPosition.Aligned(Alignment.Center)
                 )
 
                 if (args.isNotEmpty()) {
                     when (args[0]) {
-                        "--startup" -> showWindow.value = false
+                        "--startup" -> {
+                            showWindow.value = false
+                        }
                     }
                 }
 
@@ -112,35 +112,28 @@ class LoginMain {
                 LaunchedEffect(id.value) {
                     login.value = true
                 }
-
+                LaunchedEffect(windowSub.value){
+                    trayState.sendNotification(Notification("华交校园网登录工具", windowSub.value, Notification.Type.None))
+                }
                 if (login.value) {
-                    coroutineScope.launch {
+                    coroutineScope.launch(Dispatchers.IO) {
                         try {
-                            val netState = LoginService().getState()
-                            val rstTxt = when (netState) {
+                            val netState = loginService.getState()
+                            windowSub.value = when (netState) {
                                 1 -> "您似乎没有网络连接"
-                                3 -> LoginService().login(id.value, pwd.value, isp.value)
+                                3 -> loginService.login(id.value, pwd.value, isp.value)
                                 4 -> "您已经处于登录状态"
                                 else -> "您连接的wifi似乎不是校园网"
                             }
-                                windowSub.value = rstTxt
-
-                                trayState.sendNotification(Notification("华交校园网登录", rstTxt, Notification.Type.None))
-
                         } catch (e: Exception) {
                                 windowSub.value = "登录失败，捕获到异常：$e"
-
-                                trayState.sendNotification(
-                                    Notification("华交校园网登录", "登录失败，捕获到异常：$e", Notification.Type.None)
-                                )
-
                         }
                         login.value = false
                     }
                 }
 
                 Tray(
-                    icon = painterResource("icon.svg"),
+                    icon = trayIcon,
                     state = trayState,
                     tooltip = "华交校园网登录",
                     onAction = {
@@ -150,7 +143,7 @@ class LoginMain {
                         Item("login", onClick = { login.value = true})
                         Item("exit", onClick = {
                             AppSingleton.releaseLock()
-                            exitApplication()
+                            exitProcess(0)
                         })
                     }
                 )

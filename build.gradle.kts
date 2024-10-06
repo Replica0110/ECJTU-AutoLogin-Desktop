@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.lonx"
-version = "1.0-SNAPSHOT"
+version = "1.0.1"
 
 repositories {
     mavenCentral()
@@ -25,29 +25,23 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("io.github.moriafly:salt-ui-desktop:2.2.0-dev08")
     implementation("com.russhwolf:multiplatform-settings:1.2.0")
-    implementation("io.insert-koin:koin-compose:4.0.0")
-    implementation("io.insert-koin:koin-core:4.0.0")
-    implementation("io.insert-koin:koin-compose-viewmodel:4.0.0")
 
 }
-
+apply(from = "wix.gradle.kts")
 compose.desktop {
     application {
         mainClass = "com.lonx.LoginMain"
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Msi,TargetFormat.Exe)
             packageName = "ECJTULoginTool"
             packageVersion = "1.0.1"
-            description = "ECJTU Login Tool"
+            description = "华东交通大学校园网登录工具"
             vendor = "Agines02"
             copyright = "Copyright 2023 Agines02."
-            licenseFile.set(project.file("license.txt"))
             windows{
                 shortcut=true
-                menuGroup="tool"
                 perUserInstall=false
                 upgradeUuid="13b76f0a-b6be-4ca8-a50b-d7a9732c63ff"
-                iconFile.set(project.file("src/main/resources/icon.ico"))
             }
         }
     }
