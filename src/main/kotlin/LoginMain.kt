@@ -19,8 +19,8 @@ import com.lonx.utils.rememberMyTrayState
 import com.moriafly.salt.ui.popup.rememberPopupState
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
@@ -68,6 +68,7 @@ class LoginMain {
         private var pwd = mutableStateOf("")
         private var isp = mutableStateOf(1)
         private val loginService = LoginService()
+        private val autoExit = mutableStateOf(false)
 
         private fun initialize(settings: Settings) {
             id.value = settings.getString("id", "")
@@ -82,8 +83,6 @@ class LoginMain {
             AppSingleton
 
             application {
-
-
                 val scrollState = remember { ScrollState(0) }
                 val trayState = rememberMyTrayState()
                 val settings: Settings = PreferencesSettings(Preferences.userNodeForPackage(Main::class.java))
@@ -100,6 +99,7 @@ class LoginMain {
                     when (args[0]) {
                         "--startup" -> {
                             showWindow.value = false
+                            autoExit.value = true
                         }
                     }
                 }
@@ -120,7 +120,7 @@ class LoginMain {
                     trayState.sendNotification(Notification("登录状态", windowSub.value, Notification.Type.None))
                 }
                 if (login.value) {
-                    GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch(Dispatchers.IO) {
+                    GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
                         try {
                             val netState = loginService.getState()
                             windowSub.value = when (netState) {
@@ -145,13 +145,16 @@ class LoginMain {
                     },
                     mouseListener = object : MouseListener {
                         override fun mouseEntered(e: MouseEvent?) {}
+
                         override fun mouseExited(e: MouseEvent?) {}
 
-                        override fun mouseClicked(e: MouseEvent?) {
-                            showWindow.value = !showWindow.value
-                        }
+                        override fun mouseClicked(e: MouseEvent?) {}
 
-                        override fun mousePressed(e: MouseEvent?) {}
+                        override fun mousePressed(e: MouseEvent?) {
+                            if (e?.button == MouseEvent.BUTTON1) {
+                                showWindow.value = !showWindow.value
+                            }
+                        }
 
                         override fun mouseReleased(e: MouseEvent?) {}
                     },
@@ -162,10 +165,17 @@ class LoginMain {
                         Item(text = "退出",
                             onClick = {
                             AppSingleton.releaseLock()
-                            exitProcess(0) }
+                            exitApplication() }
                         )
                     }
                 )
+                if (autoExit.value){
+                    LaunchedEffect(Unit){
+                        delay(30000)
+                        AppSingleton.releaseLock()
+                        exitApplication()
+                    }
+                }
             }
         }
     }

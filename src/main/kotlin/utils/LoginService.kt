@@ -13,10 +13,10 @@ class LoginService {
 
     fun login(studentID: String, passwordECJTU: String, theISP: Int): String {
         if (studentID.isEmpty()) {
-            return "E3 您没有填写学号！"
+            return "未填写学号！"
         }
         if (passwordECJTU.isEmpty()) {
-            return "E3 您没有填写密码！"
+            return "未填写密码！"
         }
         val strTheISP = when (theISP) {
             1 -> "cmcc"
@@ -42,27 +42,27 @@ class LoginService {
             val location = headers["Location"]
             if (location != null) {
                 if (!location.contains("RetCode=")) {
-                    return "登录完成"
+                    return "登录成功！"
                 }
                 val startIndex = location.indexOf("RetCode=") + 8
                 val endIndex = location.indexOf("&", startIndex)
                 if (startIndex >= 0 && endIndex >= 0) {
                     return when (location.substring(startIndex, endIndex)) {
-                        "userid error1" -> "E3 账号不存在(或未绑定宽带账号或运营商选择有误)"
-                        "userid error2" -> "E3 密码错误"
-                        "512" -> "E3 AC认证失败(重复登录之类的)"
-                        "Rad:Oppp error: Limit Users Err" -> "E3 超出校园网设备数量限制"
+                        "userid error1" -> "账号不存在(未绑定宽带账号或运营商选择有误)"
+                        "userid error2" -> "密码错误"
+                        "512" -> "AC认证失败(重复登录)"
+                        "Rad:Oppp error: Limit Users Err" -> "超出校园网设备数量限制"
                         else -> {
-                            "E4 登录失败：\n未知错误"
+                            "登录失败，未知错误"
                         }
                     }
                 }
-                "E2 无法解析回包数据：$headers"
+                "无法解析回包数据：$headers"
             } else {
-                "E1 无法解析回包数据：$headers"
+                "无法解析回包数据：$headers"
             }
         } catch (e: IOException) {
-            "E0 发送登录请求失败，捕获到异常：$e"
+            "发送登录请求失败，捕获到异常：$e"
         }
     }
 
@@ -100,6 +100,4 @@ class LoginService {
             }
         }
     }
-
-
 }
