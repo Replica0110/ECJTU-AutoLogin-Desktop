@@ -11,7 +11,7 @@ import javax.xml.transform.OutputKeys
 import java.nio.charset.StandardCharsets
 
 // 如果要让用户选择安装路径，需要设置 license 文件，如果不设置，会使用一个默认的 license
-val licenseFile = project.file("gpl-3.0.rtf")
+val licenseFile = project.file("license.rtf")
 val licensePath = if(licenseFile.exists()) licenseFile.absolutePath else ""
 
 // 设置安装包的图标，显示在控制面板的应用程序列表
