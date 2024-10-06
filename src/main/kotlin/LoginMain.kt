@@ -4,19 +4,26 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.*
+import androidx.compose.ui.window.Notification
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
 import com.lonx.ui.app
+import com.lonx.utils.GlobalCoroutineScopeImpl
 import com.lonx.utils.LoginService
+import com.lonx.utils.MyTray
+import com.lonx.utils.rememberMyTrayState
 import com.moriafly.salt.ui.popup.rememberPopupState
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.prefs.Preferences
@@ -75,9 +82,10 @@ class LoginMain {
             AppSingleton
 
             application {
-                val coroutineScope = rememberCoroutineScope()
+
+
                 val scrollState = remember { ScrollState(0) }
-                val trayState = rememberTrayState()
+                val trayState = rememberMyTrayState()
                 val settings: Settings = PreferencesSettings(Preferences.userNodeForPackage(Main::class.java))
                 val trayIcon = painterResource("icon.svg")
                 initialize(settings)
@@ -109,10 +117,10 @@ class LoginMain {
                 )
 
                 LaunchedEffect(windowSub.value){
-                    trayState.sendNotification(Notification("华交校园网登录工具", windowSub.value, Notification.Type.None))
+                    trayState.sendNotification(Notification("登录状态", windowSub.value, Notification.Type.None))
                 }
                 if (login.value) {
-                    coroutineScope.launch(Dispatchers.IO) {
+                    GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch(Dispatchers.IO) {
                         try {
                             val netState = loginService.getState()
                             windowSub.value = when (netState) {
@@ -128,19 +136,34 @@ class LoginMain {
                     }
                 }
 
-                Tray(
+                MyTray(
                     icon = trayIcon,
                     state = trayState,
                     tooltip = "华交校园网登录",
                     onAction = {
                         showWindow.value = !showWindow.value
                     },
+                    mouseListener = object : MouseListener {
+                        override fun mouseEntered(e: MouseEvent?) {}
+                        override fun mouseExited(e: MouseEvent?) {}
+
+                        override fun mouseClicked(e: MouseEvent?) {
+                            showWindow.value = !showWindow.value
+                        }
+
+                        override fun mousePressed(e: MouseEvent?) {}
+
+                        override fun mouseReleased(e: MouseEvent?) {}
+                    },
                     menu = {
-                        Item("login", onClick = { login.value = true})
-                        Item("exit", onClick = {
+                        Item(text = "登录",
+                            onClick = { login.value = true}
+                        )
+                        Item(text = "退出",
+                            onClick = {
                             AppSingleton.releaseLock()
-                            exitProcess(0)
-                        })
+                            exitProcess(0) }
+                        )
                     }
                 )
             }

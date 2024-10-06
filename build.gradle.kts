@@ -31,13 +31,14 @@ apply(from = "wix.gradle.kts")
 compose.desktop {
     application {
         mainClass = "com.lonx.LoginMain"
+        jvmArgs += listOf("-Dfile.encoding=GBK")
         nativeDistributions {
             targetFormats(TargetFormat.Msi,TargetFormat.Exe)
             packageName = "ECJTULoginTool"
             packageVersion = "1.0.1"
-            description = "华东交通大学校园网登录工具"
+            description = "华交校园网工具"
             vendor = "Agines02"
-            copyright = "Copyright 2023 Agines02."
+            copyright = "Copyright 2024 Agines02."
             windows{
                 shortcut=true
                 perUserInstall=false

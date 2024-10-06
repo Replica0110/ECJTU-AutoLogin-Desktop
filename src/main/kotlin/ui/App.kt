@@ -15,9 +15,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
@@ -26,7 +29,19 @@ import com.lonx.utils.AutoStartUp
 import com.moriafly.salt.ui.*
 import com.moriafly.salt.ui.popup.PopupState
 import com.russhwolf.settings.Settings
+import java.awt.ComponentOrientation
+import java.awt.GraphicsConfiguration
+import java.awt.GraphicsEnvironment
+import java.awt.PopupMenu
+import java.awt.SystemTray
+import java.awt.TrayIcon
+import java.awt.event.ActionEvent
+import java.awt.event.MouseListener
+import java.util.Locale
+import java.util.*
 import kotlin.system.exitProcess
+private val iconSize = Size(512f, 512f)
+
 
 @OptIn(UnstableSaltApi::class)
 @Composable
