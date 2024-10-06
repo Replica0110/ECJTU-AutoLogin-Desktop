@@ -56,7 +56,7 @@ class LoginMain {
     companion object {
         private var showWindow = mutableStateOf(true)
         private var windowSub = mutableStateOf("")
-        private var login = mutableStateOf(false)
+        private var login = mutableStateOf(true)
         private var id = mutableStateOf("")
         private var pwd = mutableStateOf("")
         private var isp = mutableStateOf(1)
@@ -95,7 +95,6 @@ class LoginMain {
                         }
                     }
                 }
-
                 app(
                     showWindow = showWindow,
                     settings = settings,
@@ -109,9 +108,6 @@ class LoginMain {
                     popupState = rememberPopupState()
                 )
 
-                LaunchedEffect(id.value) {
-                    login.value = true
-                }
                 LaunchedEffect(windowSub.value){
                     trayState.sendNotification(Notification("华交校园网登录工具", windowSub.value, Notification.Type.None))
                 }

@@ -49,7 +49,6 @@ fun app(
         else -> remember { mutableStateOf("中国电信") }
     }
     val autoStartUp = AutoStartUp()
-
     if (showWindow.value) {
         Window(
             icon = painterResource("icon.svg"),
@@ -81,13 +80,13 @@ fun app(
                             RoundedColumn {
                             ItemEdit(
                                 text = id.value,
-                                onChange = { id.value = it },
+                                onChange = { id.value = it},
                                 hint = "请输入账号"
                             )
                             ItemDivider()
                             ItemEditPassword(
                                 text = pwd.value,
-                                onChange = { pwd.value = it },
+                                onChange = { pwd.value = it},
                                 hint = "请输入密码"
                             )
                             ItemDivider()
@@ -109,7 +108,21 @@ fun app(
                                     popSub.value = "中国电信"
                                     popupState.dismiss()
                                 }, arrowType = ItemArrowType.None)
-                            }}
+                            }
+                                ItemDivider()
+                                SaltButton(
+                                    text = "保存账号",
+                                    onClick = {
+                                        settings.apply {
+                                            clear()
+                                            putString("id", id.value)
+                                            putString("pwd", pwd.value)
+                                            putInt("isp", isp.value)
+                                        }
+                                        windowSub.value = "账号已保存"
+                                    }
+                                )
+                            }
                             RoundedColumn {
                             SaltButton(
                                 onClick = {
@@ -117,19 +130,7 @@ fun app(
                                 },
                                 text = "登录"
                             )
-                            ItemDivider()
-                            SaltButton(
-                                text = "保存账号",
-                                onClick = {
-                                    settings.apply {
-                                        clear()
-                                        putString("id", id.value)
-                                        putString("pwd", pwd.value)
-                                        putInt("isp", isp.value)
-                                    }
-                                    windowSub.value = "账号已保存"
-                                }
-                            )
+
                             ItemDivider()
                             SaltButton(
                                 text = "开机自启",
