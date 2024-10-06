@@ -84,7 +84,7 @@ class LoginMain {
 
                 val windowState = rememberWindowState(
                     width = 380.dp,
-                    height = 450.dp,
+                    height = 400.dp,
                     position = WindowPosition.Aligned(Alignment.Center)
                 )
 

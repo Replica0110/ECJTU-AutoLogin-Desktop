@@ -80,13 +80,21 @@ fun app(
                             RoundedColumn {
                             ItemEdit(
                                 text = id.value,
-                                onChange = { id.value = it},
+                                onChange = { id.value = it
+                                           settings.apply {
+                                               putString("id", it)
+                                           }
+                                           },
                                 hint = "请输入账号"
                             )
                             ItemDivider()
                             ItemEditPassword(
                                 text = pwd.value,
-                                onChange = { pwd.value = it},
+                                onChange = { pwd.value = it
+                                    settings.apply {
+                                        putString("pwd", it)
+                                    }
+                                           },
                                 hint = "请输入密码"
                             )
                             ItemDivider()
@@ -96,32 +104,28 @@ fun app(
                                 Item(text = "中国移动", onClick = {
                                     isp.value = 1
                                     popSub.value = "中国移动"
+                                    settings.apply {
+                                        putInt("isp", 1)
+                                    }
                                     popupState.dismiss()
                                 }, arrowType = ItemArrowType.None)
                                 Item(text = "中国联通", onClick = {
                                     isp.value = 2
                                     popSub.value = "中国联通"
+                                    settings.apply {
+                                        putInt("isp", 2)
+                                    }
                                     popupState.dismiss()
                                 }, arrowType = ItemArrowType.None)
                                 Item(text = "中国电信", onClick = {
                                     isp.value = 3
                                     popSub.value = "中国电信"
+                                    settings.apply {
+                                        putInt("isp", 3)
+                                    }
                                     popupState.dismiss()
                                 }, arrowType = ItemArrowType.None)
                             }
-                                ItemDivider()
-                                SaltButton(
-                                    text = "保存账号",
-                                    onClick = {
-                                        settings.apply {
-                                            clear()
-                                            putString("id", id.value)
-                                            putString("pwd", pwd.value)
-                                            putInt("isp", isp.value)
-                                        }
-                                        windowSub.value = "账号已保存"
-                                    }
-                                )
                             }
                             RoundedColumn {
                             SaltButton(
