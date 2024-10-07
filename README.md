@@ -22,7 +22,18 @@
 
 ## Python脚本版
 
+1. 安装python并设置环境变量
 
+2. 安装依赖：
+```bash
+pip install requests
+pip install win10toast
+```
+
+3. 下载[login.pyw](./login.pyw)
+4. 修改代码中的账号密码等参数
+5. 双击运行
+6. 如果不想弹出命令行窗口，可以设置文件默认打开方式为pythonw.exe
 
 ## 感谢
 
