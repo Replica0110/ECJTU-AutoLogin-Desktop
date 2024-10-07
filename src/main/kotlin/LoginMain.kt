@@ -12,10 +12,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.lonx.ui.app
-import com.lonx.utils.GlobalCoroutineScopeImpl
-import com.lonx.utils.LoginService
-import com.lonx.utils.MyTray
-import com.lonx.utils.rememberMyTrayState
+import com.lonx.utils.*
 import com.moriafly.salt.ui.popup.rememberPopupState
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
@@ -61,13 +58,14 @@ object AppSingleton {
 
 class LoginMain {
     companion object {
+        var loginIn = mutableStateOf(true)
+        var loginOut = mutableStateOf(false)
+        val checkbox = mutableStateOf(AutoStartUp.isAutoStartUp())
         private var showWindow = mutableStateOf(true)
         private var windowSub = mutableStateOf("")
-        private var login = mutableStateOf(true)
         private var id = mutableStateOf("")
         private var pwd = mutableStateOf("")
         private var isp = mutableStateOf(1)
-        private val loginService = LoginService()
         private val autoExit = mutableStateOf(false)
 
         private fun initialize(settings: Settings) {
@@ -91,7 +89,7 @@ class LoginMain {
 
                 val windowState = rememberWindowState(
                     width = 380.dp,
-                    height = 400.dp,
+                    height = 450.dp,
                     position = WindowPosition.Aligned(Alignment.Center)
                 )
 
@@ -111,7 +109,6 @@ class LoginMain {
                     windowState = windowState,
                     id = id,
                     pwd = pwd,
-                    login = login,
                     windowSub = windowSub,
                     popupState = rememberPopupState()
                 )
@@ -119,20 +116,36 @@ class LoginMain {
                 LaunchedEffect(windowSub.value){
                     trayState.sendNotification(Notification("登录状态", windowSub.value, Notification.Type.None))
                 }
-                if (login.value) {
+                if (loginOut.value) {
                     GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
                         try {
-                            val netState = loginService.getState()
+                            val netState = LoginService.getState()
                             windowSub.value = when (netState) {
                                 1 -> "您似乎没有网络连接"
-                                3 -> loginService.login(id.value, pwd.value, isp.value)
-                                4 -> "您已经处于登录状态"
-                                else -> "您连接的wifi似乎不是校园网"
+                                3 -> LoginService.loginOut()
+                                4 -> LoginService.loginOut()
+                                else -> "您已经处于注销状态"
+                            }
+                        } catch (e: Exception) {
+                                windowSub.value = "注销失败，捕获到异常：$e"
+                        }
+                        loginOut.value = false
+                    }
+                }
+                if (loginIn.value) {
+                    GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
+                        try {
+                            val netState = LoginService.getState()
+                            windowSub.value = when (netState) {
+                                1 -> "没有网络连接"
+                                3 -> LoginService.login(id.value, pwd.value, isp.value)
+                                4 -> "网络已连接"
+                                else -> "连接的似乎不是校园网"
                             }
                         } catch (e: Exception) {
                                 windowSub.value = "登录失败，捕获到异常：$e"
                         }
-                        login.value = false
+                        loginIn.value = false
                     }
                 }
 
@@ -155,13 +168,30 @@ class LoginMain {
                                 showWindow.value = !showWindow.value
                             }
                         }
-
                         override fun mouseReleased(e: MouseEvent?) {}
                     },
                     menu = {
                         Item(text = "登录",
-                            onClick = { login.value = true}
+                            onClick = { loginIn.value = true}
                         )
+                        Item(text = "注销",
+                            onClick = { loginOut.value = true}
+                        )
+                        CheckboxItem(
+                            text = "开机自启",
+                            checked = checkbox.value,
+                            onCheckedChange = { checkboxState ->
+                                checkbox.value = checkboxState
+                                if (checkboxState){
+                                    AutoStartUp.makeAutoStartUp()
+                                    windowSub.value = "已设置开机自启"
+                                } else {
+                                    AutoStartUp.removeAutoStartUp()
+                                    windowSub.value = "已取消开机自启"
+                                }
+                            },
+                        )
+                        Separator()
                         Item(text = "退出",
                             onClick = {
                             AppSingleton.releaseLock()

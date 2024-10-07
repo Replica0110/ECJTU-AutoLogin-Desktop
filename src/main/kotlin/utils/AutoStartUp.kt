@@ -10,18 +10,18 @@ val Path.noOptionParent: Path
     get() {
         return this.parent?.parent ?: this
     }
-    class AutoStartUp {
-        private val systemProperty = getSystemProperty()
-        private fun getAppJarPath(): Path {
-            systemProperty.getOption("compose.application.resources.dir")?.let {
-                return it.toPath()
-            }
-            throw IllegalStateException("Could not find app path")
+object AutoStartUp {
+    private val systemProperty = getSystemProperty()
+    private fun getAppJarPath(): Path {
+        systemProperty.getOption("compose.application.resources.dir")?.let {
+            return it.toPath()
         }
-        private fun getAppExePath(): Path {
-            return getAppJarPath().noOptionParent.normalized()
-        }
-        private val path = getAppExePath().resolve("ECJTULoginTool.exe").toString()
+        throw IllegalStateException("Could not find app path")
+    }
+    private fun getAppExePath(): Path {
+        return getAppJarPath().noOptionParent.normalized()
+    }
+    private val path = getAppExePath().resolve("ECJTULoginTool.exe").toString()
     fun isAutoStartUp(): Boolean {
         val command = listOf(
             "reg",
@@ -40,8 +40,8 @@ val Path.noOptionParent: Path
             var line: String?
             while (reader.readLine().also { line = it } != null) {
                 if (line!!.contains("REG_SZ")) {
-                    val registryValue = line!!.substringAfter("REG_SZ").substringBefore("--startup").trim()
-                    return registryValue.equals(path, ignoreCase = true)
+                    val registryValue = line!!.substringBefore("REG_SZ").trim()
+                    return registryValue.equals(AppName, ignoreCase = true)
                 }
             }
         } catch (e: Exception) {

@@ -1,6 +1,7 @@
 package com.lonx.utils
 
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -9,7 +10,34 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
-class LoginService {
+object LoginService {
+    fun loginOut():String {
+        val client = OkHttpClient.Builder()
+            .followRedirects(false)
+            .build()
+
+        val request = Request.Builder()
+            .url("http://172.16.2.100:801/eportal/?c=ACSetting&a=Logout&wlanuserip=null&wlanacip=null&wlanacname=null&port=&hostname=172.16.2.100&iTermType=1&session=null&queryACIP=0&mac=00-00-00-00-00-00")
+            .post(
+                body = "".toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull())
+            )
+            .build()
+
+        val response = client.newCall(request).execute()
+        val location = response.headers["Location"]
+        if (location != null) {
+            return if (location.contains("ACLogOut=1")) {
+                "注销成功！"
+            } else if (location.contains("ACLogOut=2")) {
+                "注销失败，未连接网络或连接的不是校园网"
+            } else {
+                "注销失败，未知错误！"
+            }
+        }
+        return "注销失败，未知错误！"
+    }
+
+
 
     fun login(studentID: String, passwordECJTU: String, theISP: Int): String {
         if (studentID.isEmpty()) {
@@ -40,6 +68,7 @@ class LoginService {
             val response = call.execute()
             val headers = response.headers
             val location = headers["Location"]
+            println(location)
             if (location != null) {
                 if (!location.contains("RetCode=")) {
                     return "登录成功！"
