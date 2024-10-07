@@ -3,31 +3,22 @@ package com.lonx.ui
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.BottomAppBar
 import androidx.compose.material.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import com.lonx.AppSingleton
-import com.lonx.LoginMain.Companion.checkbox
+import com.lonx.LoginMain.Companion.autoStartUp
 import com.lonx.LoginMain.Companion.loginIn
 import com.lonx.LoginMain.Companion.loginOut
 import com.lonx.utils.AutoStartUp
 import com.moriafly.salt.ui.*
-import com.moriafly.salt.ui.popup.PopupState
 import com.russhwolf.settings.Settings
 import kotlin.system.exitProcess
 
@@ -41,16 +32,12 @@ fun app(
     scrollState: ScrollState = remember { ScrollState(0) },
     isp: MutableState<Int>,
     windowState: WindowState,
-    popupState: PopupState,
-    id: MutableState<String>,
-    pwd: MutableState<String>,
+    studentId: MutableState<String>,
+    password: MutableState<String>,
+    showNotification: MutableState<Boolean>,
     windowSub: MutableState<String>
 ) {
-    val popSub = when (isp.value) {
-        1 -> remember { mutableStateOf("中国移动") }
-        2 -> remember { mutableStateOf("中国联通") }
-        else -> remember { mutableStateOf("中国电信") }
-    }
+
     if (showWindow.value) {
         Window(
             icon = painterResource("icon.svg"),
@@ -58,18 +45,50 @@ fun app(
             onCloseRequest = { showWindow.value = false },
             title = "华交校园网工具"
         ) {
+            var showInfoDialog by remember { mutableStateOf(false) }
+            if (showInfoDialog) {
+                val tmpStudentId= remember { mutableStateOf(studentId.value) }
+                val tmpPassword= remember { mutableStateOf(password.value) }
+                val tmpISP= remember { mutableStateOf(isp.value) }
+                SaltInputDialog(
+                    title = "账号信息",
+                    hint = "请输入账号",
+                    secondHint = "请输入密码",
+                    onConfirm = {
+                        studentId.value = tmpStudentId.value
+                        password.value = tmpPassword.value
+                        isp.value=tmpISP.value
+                        settings.apply {
+                            putString("id", studentId.value)
+                            putString("pwd", password.value)
+                            putInt("isp", isp.value)
+                        }
+                        showInfoDialog = false
+                    },
+                    popupMenuText = "选择运营商",
+                    popupMenuItems = listOf("中国移动", "中国联通", "中国电信"),
+                    popupMenuItemIndex = isp.value-1,
+                    onDismissRequest = {showInfoDialog=false},
+                    firstEditText = tmpStudentId.value,
+                    secondEditText = tmpPassword.value,
+                    onChange = {id,pwd,ispIndex->
+                        tmpStudentId.value=id
+                        tmpPassword.value=pwd
+                        tmpISP.value=ispIndex+1
+                    },
+                )
+            }
             SaltTheme(configs = SaltConfigs(false)) {
                 Scaffold(
                     bottomBar = {
-                        BottomAppBar(modifier = Modifier.height(20.dp), backgroundColor = SaltTheme.colors.background) {
+                        BottomAppBar(modifier = Modifier.height(25.dp), backgroundColor = SaltTheme.colors.background) {
                             Text(
                                 text = windowSub.value,
-                                modifier = Modifier.statusBarsPadding(),
+                                modifier = Modifier.padding(start = SaltTheme.dimens.subPadding),
                                 style = SaltTheme.textStyles.sub
                             )
                         }
-                    }
-                    ,
+                    },
                     content = { innerPadding ->
                         Column(
                             modifier = Modifier
@@ -77,98 +96,63 @@ fun app(
                                 .background(SaltTheme.colors.background)
                                 .padding(innerPadding)
                                 .statusBarsPadding()
-                                .verticalScroll(scrollState)
-                        ) {
+                                .verticalScroll(scrollState)) {
                             RoundedColumn {
-                            ItemEdit(
-                                text = id.value,
-                                onChange = { id.value = it
-                                           settings.apply {
-                                               putString("id", it)
-                                           }
-                                           },
-                                hint = "请输入账号"
-                            )
-                            ItemDivider()
-                            ItemEditPassword(
-                                text = pwd.value,
-                                onChange = { pwd.value = it
-                                    settings.apply {
-                                        putString("pwd", it)
-                                    }
-                                           },
-                                hint = "请输入密码"
-                            )
-                            ItemDivider()
-                            ItemPopup(
-                                state = popupState, text = "切换运营商", sub = popSub.value
-                            ) {
-                                Item(text = "中国移动", onClick = {
-                                    isp.value = 1
-                                    popSub.value = "中国移动"
-                                    settings.apply {
-                                        putInt("isp", 1)
-                                    }
-                                    popupState.dismiss()
-                                }, arrowType = ItemArrowType.None)
-                                Item(text = "中国联通", onClick = {
-                                    isp.value = 2
-                                    popSub.value = "中国联通"
-                                    settings.apply {
-                                        putInt("isp", 2)
-                                    }
-                                    popupState.dismiss()
-                                }, arrowType = ItemArrowType.None)
-                                Item(text = "中国电信", onClick = {
-                                    isp.value = 3
-                                    popSub.value = "中国电信"
-                                    settings.apply {
-                                        putInt("isp", 3)
-                                    }
-                                    popupState.dismiss()
-                                }, arrowType = ItemArrowType.None)
-                            }
+                                ItemTip(text = "账号信息")
+                                Item(
+                                    text = "账号设置",
+                                    sub = "当前账号：${studentId.value}",
+                                    onClick = { showInfoDialog=true },
+                                )
                             }
                             RoundedColumn {
-                            SaltButton(
-                                onClick = {
-                                    loginIn.value = true
-                                },
-                                text = "登录"
-                            )
-                            ItemDivider()
-                            SaltButton(
-                                onClick = {
-                                    loginOut.value = true
-                                },
-                                text = "注销"
-                            )
-                            ItemDivider()
-                            SaltButton(
-                                text = "开机自启",
-                                onClick = {
-                                    if (AutoStartUp.isAutoStartUp()) {
-                                        AutoStartUp.removeAutoStartUp()
-                                        windowSub.value = "已取消开机自启"
-                                        checkbox.value = false
-                                    } else {
-                                        AutoStartUp.makeAutoStartUp()
-                                        windowSub.value = "已设置开机自启"
-                                        checkbox.value = true
-                                    }
-                                }
-                            )
-                            ItemDivider()
-                            SaltButton(
-                                text = "退出",
-                                onClick = {
-                                    AppSingleton.releaseLock()
-                                    exitProcess(0)
-                                }
-                            )}
-
+                                ItemTip(text = "登录")
+                                SaltButton(
+                                    onClick = {
+                                        loginIn.value = true
+                                    },
+                                    text = "登录"
+                                )
+                                ItemDivider()
+                                SaltButton(
+                                    onClick = {
+                                        loginOut.value = true
+                                    },
+                                    text = "注销"
+                                )
+                            }
+                            RoundedColumn {
+                                ItemTip(text = "设置")
+                                SaltItemSwitcher(
+                                    text = "系统通知",
+                                    state = showNotification.value,
+                                    onChange ={
+                                        showNotification.value = it
+                                        settings.apply {
+                                            putBoolean("notification", it)
+                                        }
+                                    })
+                                ItemDivider()
+                                SaltItemSwitcher(
+                                    text = "开机自启",
+                                    state = autoStartUp.value,
+                                    onChange = {
+                                        autoStartUp.value = it
+                                        if (AutoStartUp.isAutoStartUp()) {
+                                            AutoStartUp.removeAutoStartUp()
+                                        } else {
+                                            AutoStartUp.makeAutoStartUp()
+                                        } },
+                                )
+                                ItemDivider()
+                                SaltButton(
+                                    text = "退出",
+                                    onClick = {
+                                        AppSingleton.releaseLock()
+                                        exitProcess(0) }
+                                )
+                            }
                         }
-
                     }
                 )
             }
@@ -176,34 +160,4 @@ fun app(
     }
 }
 
-@UnstableSaltApi
-@Composable
-fun SaltButton(
-    onClick: () -> Unit,
-    text: String,
-    enabled: Boolean = true,
-    primary: Boolean = true
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(SaltTheme.dimens.item)
-            .alpha(if (enabled) 1f else 0.5f)
-            .clickable(
-                enabled = enabled,
-                role = Role.Button,
-                onClickLabel = text
-            ) {
-                onClick()
-            }
-            .padding(horizontal = SaltTheme.dimens.padding),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = text,
-            color = if (enabled && primary) SaltTheme.colors.highlight else SaltTheme.colors.subText,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
+

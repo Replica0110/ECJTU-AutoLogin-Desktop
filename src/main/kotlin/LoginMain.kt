@@ -13,7 +13,6 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.lonx.ui.app
 import com.lonx.utils.*
-import com.moriafly.salt.ui.popup.rememberPopupState
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.Dispatchers.Main
@@ -60,23 +59,24 @@ class LoginMain {
     companion object {
         var loginIn = mutableStateOf(true)
         var loginOut = mutableStateOf(false)
-        val checkbox = mutableStateOf(AutoStartUp.isAutoStartUp())
+        val autoStartUp = mutableStateOf(AutoStartUp.isAutoStartUp())
         private var showWindow = mutableStateOf(true)
         private var windowSub = mutableStateOf("")
-        private var id = mutableStateOf("")
-        private var pwd = mutableStateOf("")
+        private var studentId = mutableStateOf("")
+        private var password = mutableStateOf("")
         private var isp = mutableStateOf(1)
+        private var showNotification = mutableStateOf(true)
         private val autoExit = mutableStateOf(false)
 
         private fun initialize(settings: Settings) {
-            id.value = settings.getString("id", "")
-            pwd.value = settings.getString("pwd", "")
+            studentId.value = settings.getString("id", "")
+            password.value = settings.getString("pwd", "")
             isp.value = settings.getInt("isp", 1)
+            showNotification.value = settings.getBoolean("notification", true)
         }
 
         @JvmStatic
         fun main(args: Array<String>) {
-            showWindow.value = true
 
             AppSingleton
 
@@ -89,7 +89,7 @@ class LoginMain {
 
                 val windowState = rememberWindowState(
                     width = 380.dp,
-                    height = 450.dp,
+                    height = 530.dp,
                     position = WindowPosition.Aligned(Alignment.Center)
                 )
 
@@ -104,17 +104,19 @@ class LoginMain {
                 app(
                     showWindow = showWindow,
                     settings = settings,
-                    isp = isp,
                     scrollState = scrollState,
+                    isp = isp,
                     windowState = windowState,
-                    id = id,
-                    pwd = pwd,
-                    windowSub = windowSub,
-                    popupState = rememberPopupState()
+                    studentId = studentId,
+                    password = password,
+                    showNotification = showNotification,
+                    windowSub = windowSub
                 )
-
                 LaunchedEffect(windowSub.value){
-                    trayState.sendNotification(Notification("登录状态", windowSub.value, Notification.Type.None))
+                    delay(500)
+                     if (showNotification.value) {
+                        trayState.sendNotification(Notification("登录状态", windowSub.value, Notification.Type.None))
+                    }
                 }
                 if (loginOut.value) {
                     GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
@@ -138,7 +140,7 @@ class LoginMain {
                             val netState = LoginService.getState()
                             windowSub.value = when (netState) {
                                 1 -> "没有网络连接"
-                                3 -> LoginService.login(id.value, pwd.value, isp.value)
+                                3 -> LoginService.login(studentId.value, password.value, isp.value)
                                 4 -> "网络已连接"
                                 else -> "连接的似乎不是校园网"
                             }
@@ -146,6 +148,10 @@ class LoginMain {
                                 windowSub.value = "登录失败，捕获到异常：$e"
                         }
                         loginIn.value = false
+                    }
+                    if (autoExit.value){
+                        AppSingleton.releaseLock()
+                        exitApplication()
                     }
                 }
 
@@ -178,16 +184,24 @@ class LoginMain {
                             onClick = { loginOut.value = true}
                         )
                         CheckboxItem(
+                            text = "系统通知",
+                            checked = showNotification.value,
+                            onCheckedChange = {
+                                showNotification.value = it
+                                settings.apply {
+                                    putBoolean("showNotification", showNotification.value)
+                                }
+                            },
+                        )
+                        CheckboxItem(
                             text = "开机自启",
-                            checked = checkbox.value,
-                            onCheckedChange = { checkboxState ->
-                                checkbox.value = checkboxState
-                                if (checkboxState){
+                            checked = autoStartUp.value,
+                            onCheckedChange = {
+                                autoStartUp.value = it
+                                if (autoStartUp.value){
                                     AutoStartUp.makeAutoStartUp()
-                                    windowSub.value = "已设置开机自启"
                                 } else {
                                     AutoStartUp.removeAutoStartUp()
-                                    windowSub.value = "已取消开机自启"
                                 }
                             },
                         )
@@ -199,13 +213,6 @@ class LoginMain {
                         )
                     }
                 )
-                if (autoExit.value){
-                    LaunchedEffect(Unit){
-                        delay(30000)
-                        AppSingleton.releaseLock()
-                        exitApplication()
-                    }
-                }
             }
         }
     }
