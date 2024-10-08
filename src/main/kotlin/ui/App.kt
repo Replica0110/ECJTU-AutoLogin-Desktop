@@ -13,14 +13,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
-import com.lonx.AppSingleton
-import com.lonx.LoginMain.Companion.autoStartUp
-import com.lonx.LoginMain.Companion.loginIn
-import com.lonx.LoginMain.Companion.loginOut
+import com.lonx.ECJTUAutoLogin.Companion.autoStartUp
+import com.lonx.ECJTUAutoLogin.Companion.exit
+import com.lonx.ECJTUAutoLogin.Companion.loginIn
+import com.lonx.ECJTUAutoLogin.Companion.loginOut
 import com.lonx.utils.AutoStartUp
 import com.moriafly.salt.ui.*
 import com.russhwolf.settings.Settings
-import kotlin.system.exitProcess
 
 
 @OptIn(UnstableSaltApi::class)
@@ -37,7 +36,6 @@ fun app(
     showNotification: MutableState<Boolean>,
     windowSub: MutableState<String>
 ) {
-
     if (showWindow.value) {
         Window(
             icon = painterResource("icon.svg"),
@@ -63,8 +61,7 @@ fun app(
                             putString("pwd", password.value)
                             putInt("isp", isp.value)
                         }
-                        showInfoDialog = false
-                    },
+                        showInfoDialog = false },
                     popupMenuText = "选择运营商",
                     popupMenuItems = listOf("中国移动", "中国联通", "中国电信"),
                     popupMenuItemIndex = isp.value-1,
@@ -74,9 +71,8 @@ fun app(
                     onChange = {id,pwd,ispIndex->
                         tmpStudentId.value=id
                         tmpPassword.value=pwd
-                        tmpISP.value=ispIndex+1
-                    },
-                )
+                        tmpISP.value=ispIndex+1 }
+                    )
             }
             SaltTheme(configs = SaltConfigs(false)) {
                 Scaffold(
@@ -87,8 +83,7 @@ fun app(
                                 modifier = Modifier.padding(start = SaltTheme.dimens.subPadding),
                                 style = SaltTheme.textStyles.sub
                             )
-                        }
-                    },
+                        } },
                     content = { innerPadding ->
                         Column(
                             modifier = Modifier
@@ -102,22 +97,18 @@ fun app(
                                 Item(
                                     text = "账号设置",
                                     sub = "当前账号：${studentId.value}",
-                                    onClick = { showInfoDialog=true },
+                                    onClick = { showInfoDialog=true }
                                 )
                             }
                             RoundedColumn {
                                 ItemTip(text = "登录")
                                 SaltButton(
-                                    onClick = {
-                                        loginIn.value = true
-                                    },
+                                    onClick = { loginIn.value = true },
                                     text = "登录"
                                 )
                                 ItemDivider()
                                 SaltButton(
-                                    onClick = {
-                                        loginOut.value = true
-                                    },
+                                    onClick = { loginOut.value = true },
                                     text = "注销"
                                 )
                             }
@@ -138,18 +129,18 @@ fun app(
                                     state = autoStartUp.value,
                                     onChange = {
                                         autoStartUp.value = it
-                                        if (AutoStartUp.isAutoStartUp()) {
-                                            AutoStartUp.removeAutoStartUp()
-                                        } else {
+                                        if (autoStartUp.value) {
                                             AutoStartUp.makeAutoStartUp()
-                                        } },
+                                            windowSub.value = "已设置开机自启"
+                                        } else {
+                                            AutoStartUp.removeAutoStartUp()
+                                            windowSub.value = "已关闭开机自启"
+                                        } }
                                 )
                                 ItemDivider()
                                 SaltButton(
                                     text = "退出",
-                                    onClick = {
-                                        AppSingleton.releaseLock()
-                                        exitProcess(0) }
+                                    onClick = { exit() }
                                 )
                             }
                         }

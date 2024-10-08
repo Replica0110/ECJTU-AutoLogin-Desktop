@@ -1,11 +1,7 @@
-# 华东交通大学校园网登录应用桌面端(Windows)
-
-
-
 <div align="center">
 <img width="125" height="125" src="src/main/resources/icon.svg" alt="legado"/>  
 
-<h1>华交校园网工具</h1>
+<h1>华交校园网工具桌面端</h1>
 
 </div>
 
@@ -23,22 +19,30 @@
 ## Python脚本版
 
 1. 安装python并设置环境变量
-
 2. 安装依赖：
 ```bash
 pip install requests
 pip install win10toast
 ```
-
 3. 下载[login.pyw](./login.pyw)
 4. 修改代码中的账号密码等参数
 5. 双击运行
 6. 如果不想弹出命令行窗口，可以设置文件默认打开方式为pythonw.exe
+7. 设置开机自启请将脚本放在以下目录：
+```
+C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup
+```
 
 ## 感谢
 
 [compose-multiplatform](https://github.com/JetBrains/compose-multiplatform)
 
+[SaltUI](https://github.com/Moriafly/SaltUI)
+
+[CrossPaste](https://github.com/CrossPaste/crosspaste-desktop)
+
 [wix-package](https://github.com/tangshimin/wix-package)
 
 [multiplatform-settings](https://github.com/russhwolf/multiplatform-settings)
+
+[okhttp](https://github.com/square/okhttp)

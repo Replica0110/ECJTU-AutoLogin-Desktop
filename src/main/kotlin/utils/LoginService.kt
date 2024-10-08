@@ -10,7 +10,7 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
-object LoginService {
+class LoginService {
     fun loginOut():String {
         val client = OkHttpClient.Builder()
             .followRedirects(false)

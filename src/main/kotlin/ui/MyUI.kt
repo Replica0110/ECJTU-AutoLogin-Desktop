@@ -27,6 +27,12 @@ import com.moriafly.salt.ui.dialog.BasicDialog
 import com.moriafly.salt.ui.dialog.DialogTitle
 import com.moriafly.salt.ui.popup.PopupState
 
+/**
+ * @param state 开关状态
+ * @param onChange 切换状态时的回调函数
+ * @param text 显示文本
+ * @param enabled 是否启用开关
+ */
 @Composable
 fun SaltItemSwitcher(
     state: Boolean,
@@ -96,6 +102,12 @@ fun SaltItemSwitcher(
         }
     }
 }
+/**
+ * @param onClick 按钮点击时的回调函数。
+ * @param text 按钮上的文本。
+ * @param enabled 按钮是否可用，默认为 `true`。
+ * @param primary 是否为主按钮样式，默认为 `true`。
+ */
 @UnstableSaltApi
 @Composable
 fun SaltButton(
@@ -125,9 +137,25 @@ fun SaltButton(
         )
     }
 }
+/**
+ * 包含账号输入框、密码输入框及弹出菜单的对话框。
+ *
+ * @param onDismissRequest 关闭对话框的回调函数。
+ * @param onConfirm 确认按钮点击后的回调函数。
+ * @param properties 对话框属性，默认为 [DialogProperties]。
+ * @param title 对话框标题，默认为 `null`。
+ * @param firstEditText 账号输入框的初始文本。
+ * @param secondEditText 密码输入框的初始文本。
+ * @param popupMenuText 弹出菜单的文本，默认为空字符串。
+ * @param popupMenuItems 弹出菜单项列表。
+ * @param popupMenuItemIndex 当前选中的弹出菜单项索引，默认为 `0`。
+ * @param onChange 输入值变化时的回调函数，参数为新的账号文本、密码文本和选中的菜单项索引。
+ * @param hint 账号输入框提示文本，默认为 `null`。
+ * @param secondHint 密码输入框提示文本，默认为 `null`。
+ */
 @UnstableSaltApi
 @Composable
-fun SaltInputDialog(
+fun SaltInputDialog( // 账号输入框
     onDismissRequest: () -> Unit,
     onConfirm: () -> Unit,
     properties: DialogProperties = DialogProperties(),

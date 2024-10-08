@@ -30,7 +30,7 @@ dependencies {
 apply(from = "wix.gradle.kts")
 compose.desktop {
     application {
-        mainClass = "com.lonx.LoginMain"
+        mainClass = "com.lonx.ECJTUAutoLogin"
         jvmArgs += listOf("-Dfile.encoding=GBK")
         nativeDistributions {
             targetFormats(TargetFormat.Msi,TargetFormat.Exe)

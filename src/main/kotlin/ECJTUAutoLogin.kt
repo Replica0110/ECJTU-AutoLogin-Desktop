@@ -15,7 +15,6 @@ import com.lonx.ui.app
 import com.lonx.utils.*
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
-import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.awt.event.MouseEvent
@@ -55,7 +54,8 @@ object AppSingleton {
     }
 }
 
-class LoginMain {
+
+class ECJTUAutoLogin {
     companion object {
         var loginIn = mutableStateOf(true)
         var loginOut = mutableStateOf(false)
@@ -67,6 +67,7 @@ class LoginMain {
         private var isp = mutableStateOf(1)
         private var showNotification = mutableStateOf(true)
         private val autoExit = mutableStateOf(false)
+        private val loginService = LoginService()
 
         private fun initialize(settings: Settings) {
             studentId.value = settings.getString("id", "")
@@ -74,16 +75,20 @@ class LoginMain {
             isp.value = settings.getInt("isp", 1)
             showNotification.value = settings.getBoolean("notification", true)
         }
-
+        // 退出并释放锁
+        fun exit() {
+            AppSingleton.releaseLock()
+            exitProcess(0)
+        }
         @JvmStatic
         fun main(args: Array<String>) {
-
+            // 确保只有一个实例在运行
             AppSingleton
-
+            // 创建应用
             application {
                 val scrollState = remember { ScrollState(0) }
                 val trayState = rememberMyTrayState()
-                val settings: Settings = PreferencesSettings(Preferences.userNodeForPackage(Main::class.java))
+                val settings: Settings = PreferencesSettings(Preferences.userNodeForPackage(ECJTUAutoLogin::class.java))
                 val trayIcon = painterResource("icon.svg")
                 initialize(settings)
 
@@ -113,19 +118,18 @@ class LoginMain {
                     windowSub = windowSub
                 )
                 LaunchedEffect(windowSub.value){
-                    delay(500)
                      if (showNotification.value) {
-                        trayState.sendNotification(Notification("登录状态", windowSub.value, Notification.Type.None))
+                        trayState.sendNotification(Notification("网络状态", windowSub.value, Notification.Type.None))
                     }
                 }
                 if (loginOut.value) {
                     GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
                         try {
-                            val netState = LoginService.getState()
+                            val netState = loginService.getState()
                             windowSub.value = when (netState) {
                                 1 -> "您似乎没有网络连接"
-                                3 -> LoginService.loginOut()
-                                4 -> LoginService.loginOut()
+                                3 -> loginService.loginOut()
+                                4 -> loginService.loginOut()
                                 else -> "您已经处于注销状态"
                             }
                         } catch (e: Exception) {
@@ -137,10 +141,10 @@ class LoginMain {
                 if (loginIn.value) {
                     GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
                         try {
-                            val netState = LoginService.getState()
+                            val netState = loginService.getState()
                             windowSub.value = when (netState) {
                                 1 -> "没有网络连接"
-                                3 -> LoginService.login(studentId.value, password.value, isp.value)
+                                3 -> loginService.login(studentId.value, password.value, isp.value)
                                 4 -> "网络已连接"
                                 else -> "连接的似乎不是校园网"
                             }
@@ -149,12 +153,15 @@ class LoginMain {
                         }
                         loginIn.value = false
                     }
-                    if (autoExit.value){
-                        AppSingleton.releaseLock()
-                        exitApplication()
+                    // 如果包含自动退出参数，延迟5秒后自动退出
+                    LaunchedEffect(Unit){
+                        if (autoExit.value){
+                            delay(5000)
+                            exit()
+                        }
                     }
                 }
-
+                // 创建系统托盘
                 MyTray(
                     icon = trayIcon,
                     state = trayState,
@@ -170,7 +177,7 @@ class LoginMain {
                         override fun mouseClicked(e: MouseEvent?) {}
 
                         override fun mousePressed(e: MouseEvent?) {
-                            if (e?.button == MouseEvent.BUTTON1) {
+                            if (e?.button == MouseEvent.BUTTON1) { // 仅当点击左键时调用，打开主窗口
                                 showWindow.value = !showWindow.value
                             }
                         }
@@ -189,7 +196,7 @@ class LoginMain {
                             onCheckedChange = {
                                 showNotification.value = it
                                 settings.apply {
-                                    putBoolean("showNotification", showNotification.value)
+                                    putBoolean("notification", showNotification.value)
                                 }
                             },
                         )
@@ -200,16 +207,16 @@ class LoginMain {
                                 autoStartUp.value = it
                                 if (autoStartUp.value){
                                     AutoStartUp.makeAutoStartUp()
+                                    windowSub.value = "已设置开机自启"
                                 } else {
                                     AutoStartUp.removeAutoStartUp()
+                                    windowSub.value = "已关闭开机自启"
                                 }
                             },
                         )
                         Separator()
                         Item(text = "退出",
-                            onClick = {
-                            AppSingleton.releaseLock()
-                            exitApplication() }
+                            onClick = { exit() }
                         )
                     }
                 )
