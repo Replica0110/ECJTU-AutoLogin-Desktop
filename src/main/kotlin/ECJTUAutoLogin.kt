@@ -84,6 +84,7 @@ class ECJTUAutoLogin {
         fun main(args: Array<String>) {
             // 确保只有一个实例在运行
             AppSingleton
+
             // 创建应用
             application {
                 val scrollState = remember { ScrollState(0) }
@@ -91,7 +92,13 @@ class ECJTUAutoLogin {
                 val settings: Settings = PreferencesSettings(Preferences.userNodeForPackage(ECJTUAutoLogin::class.java))
                 val trayIcon = painterResource("icon.svg")
                 initialize(settings)
-
+                // 如果包含自动退出参数，延迟10秒后自动退出
+                LaunchedEffect(Unit){
+                    delay(10000)
+                    if (autoExit.value){
+                        exit()
+                    }
+                }
                 val windowState = rememberWindowState(
                     width = 380.dp,
                     height = 530.dp,
@@ -152,13 +159,6 @@ class ECJTUAutoLogin {
                                 windowSub.value = "登录失败，捕获到异常：$e"
                         }
                         loginIn.value = false
-                    }
-                    // 如果包含自动退出参数，延迟5秒后自动退出
-                    LaunchedEffect(Unit){
-                        if (autoExit.value){
-                            delay(5000)
-                            exit()
-                        }
                     }
                 }
                 // 创建系统托盘
