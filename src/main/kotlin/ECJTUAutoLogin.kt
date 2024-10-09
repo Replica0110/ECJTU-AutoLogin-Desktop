@@ -1,6 +1,8 @@
 package com.lonx
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,28 +23,37 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.prefs.Preferences
 import kotlin.system.exitProcess
 
 const val AppName = "ECJTULoginTool"
 
 object AppSingleton {
-    private val lockFile: Path = Path.of(System.getProperty("java.io.tmpdir"), "ECJTUAutoLogin.lock")
+    private val lockFile: Path = Path.of(System.getProperty("java.io.tmpdir"), "${ECJTUAutoLogin}.lock")
 
     init {
-        if (!createLockFile()) {
-            // If the lock file already exists, the application is already running
-            println("Application is already running.")
-            exitProcess(0) // Exit the new instance
+        if (!createLockFileWithPid()) {
+            if (isAnotherInstanceRunning()) {
+                exitProcess(0)
+            }
         }
     }
 
-    private fun createLockFile(): Boolean {
+    private fun createLockFileWithPid(): Boolean {  // 创建锁文件并写入进程PID
         return try {
-            Files.createFile(lockFile)
+            Files.write(lockFile, "${ProcessHandle.current().pid()}\n".toByteArray(), StandardOpenOption.CREATE_NEW)
             true
         } catch (e: Exception) {
-            false // File already exists
+            false
+        }
+    }
+    private fun isAnotherInstanceRunning(): Boolean { // 检查锁文件是否正在被另一个进程占用
+        return try {
+            val pid = Files.readAllLines(lockFile).first().toInt()
+            ProcessHandle.of(pid.toLong()).isPresent && ProcessHandle.of(pid.toLong()).get().isAlive
+        } catch (e: Exception) {
+            false
         }
     }
     fun releaseLock() {

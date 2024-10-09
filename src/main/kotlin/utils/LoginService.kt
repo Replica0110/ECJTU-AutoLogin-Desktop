@@ -68,7 +68,6 @@ class LoginService {
             val response = call.execute()
             val headers = response.headers
             val location = headers["Location"]
-            println(location)
             if (location != null) {
                 if (!location.contains("RetCode=")) {
                     return "登录成功！"
