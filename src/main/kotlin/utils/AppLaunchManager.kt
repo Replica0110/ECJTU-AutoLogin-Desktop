@@ -2,26 +2,36 @@ package com.lonx.utils
 
 import com.lonx.AppName
 import okio.Path
-import okio.Path.Companion.toPath
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-val Path.noOptionParent: Path
-    get() {
-        return this.parent?.parent ?: this
-    }
-object AutoStartUp {
-    private val systemProperty = getSystemProperty()
-    private fun getAppJarPath(): Path {
-        systemProperty.getOption("compose.application.resources.dir")?.let {
-            return it.toPath()
+
+
+object AppLaunchManager {
+
+    private const val SCRIPT = "start.bat"
+    private val pid = ProcessHandle.current().pid()
+    private val exePath = AppPathUtils.getAppExePath()
+    private val scriptPath = AppPathUtils.getAppResPath().resolve(SCRIPT)
+    fun restart(exitApplication: () -> Unit) {
+        val command =
+            listOf(
+                "cmd",
+                "/c",
+                scriptPath.toString(),
+                pid.toString(),
+            )
+        try {
+            ProcessBuilder(*command.toTypedArray())
+                .redirectErrorStream(true)
+                .start()
+
+            exitApplication()
+        } catch (e: Exception) {
+            println(e)
         }
-        throw IllegalStateException("Could not find app path")
     }
-    private fun getAppExePath(): Path {
-        return getAppJarPath().noOptionParent.normalized()
-    }
-    private val path = getAppExePath().resolve("ECJTULoginTool.exe").toString()
+
     fun isAutoStartUp(): Boolean {
         val command = listOf(
             "reg",
@@ -58,7 +68,7 @@ object AutoStartUp {
                     "add",
                     "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
                     "/v", AppName,
-                    "/d", "\"$path --startup\"",
+                    "/d", "\"$exePath --startup\"",
                     "/f"
                 )
                 val processBuilder = ProcessBuilder(*command.toTypedArray())

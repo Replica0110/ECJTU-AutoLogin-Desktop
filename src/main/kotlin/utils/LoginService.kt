@@ -1,44 +1,44 @@
 package com.lonx.utils
 
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
 class LoginService {
-    fun loginOut():String {
+
+    private val  ipGetAPI = "https://checkip.amazonaws.com"
+    private val loginOutUrl = "http://172.16.2.100:801/eportal/?c=ACSetting&a=Logout&wlanuserip=null&wlanacip=null&wlanacname=null&port=&hostname=172.16.2.100&iTermType=1&session=null&queryACIP=0&mac=00-00-00-00-00-00"
+    private val loginInUrl = "http://172.16.2.100:801/eportal/?c=ACSetting&a=Login&protocol=http:&hostname=172.16.2.100&iTermType=1&wlanacip=null&wlanacname=null&mac=00-00-00-00-00-00&enAdvert=0&queryACIP=0&loginMethod=1"
+
+
+    fun getIp(): String {
         val client = OkHttpClient.Builder()
-            .followRedirects(false)
             .build()
-
         val request = Request.Builder()
-            .url("http://172.16.2.100:801/eportal/?c=ACSetting&a=Logout&wlanuserip=null&wlanacip=null&wlanacname=null&port=&hostname=172.16.2.100&iTermType=1&session=null&queryACIP=0&mac=00-00-00-00-00-00")
-            .post(
-                body = "".toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull())
-            )
+            .url(ipGetAPI)
             .build()
-
-        val response = client.newCall(request).execute()
-        val location = response.headers["Location"]
-        if (location != null) {
-            return if (location.contains("ACLogOut=1")) {
-                "注销成功！"
-            } else if (location.contains("ACLogOut=2")) {
-                "注销失败，未连接网络或连接的不是校园网"
-            } else {
-                "注销失败，未知错误！"
-            }
+        return try {
+            val response = client.newCall(request).execute()
+            response.body?.string()?.trim() ?: "127.0.0.1"
+        } catch (e: IOException) {
+            "无法获取外部 IP 地址"
         }
-        return "注销失败，未知错误！"
     }
 
-
-
+    fun copyToClipboard(text: String) {
+        Toolkit.getDefaultToolkit().systemClipboard.setContents(
+            StringSelection(text),
+            null
+        )
+    }
+    // 登录方法
     fun login(studentID: String, passwordECJTU: String, theISP: Int): String {
         if (studentID.isEmpty()) {
             return "未填写学号！"
@@ -59,7 +59,7 @@ class LoginService {
         val mediaType = "application/x-www-form-urlencoded".toMediaType()
         val postBody = "DDDDD=%2C0%2C$studentID@$strTheISP&upass=$passwordECJTU"
         val request = Request.Builder()
-            .url("http://172.16.2.100:801/eportal/?c=ACSetting&a=Login&protocol=http:&hostname=172.16.2.100&iTermType=1&wlanacip=null&wlanacname=null&mac=00-00-00-00-00-00&enAdvert=0&queryACIP=0&loginMethod=1")
+            .url(loginInUrl)
             .post(postBody.toRequestBody(mediaType))
             .build()
 
@@ -93,7 +93,33 @@ class LoginService {
             "发送登录请求失败，捕获到异常：$e"
         }
     }
+    // 注销方法
+    fun loginOut():String {
+        val client = OkHttpClient.Builder()
+            .followRedirects(false)
+            .build()
+        val mediaType = "application/x-www-form-urlencoded".toMediaType()
+        val request = Request.Builder()
+            .url(loginOutUrl)
+            .post(
+                body = "".toRequestBody(mediaType)
+            )
+            .build()
 
+        val response = client.newCall(request).execute()
+        val location = response.headers["Location"]
+        if (location != null) {
+            return if (location.contains("ACLogOut=1")) {
+                "注销成功！"
+            } else if (location.contains("ACLogOut=2")) {
+                "注销失败，未连接网络或连接的不是校园网"
+            } else {
+                "注销失败，未知错误！"
+            }
+        }
+        return "注销失败，未知错误！"
+    }
+    // 获取网络状态
     fun getState(): Int {
         val client = OkHttpClient.Builder()
             .connectTimeout(2, TimeUnit.SECONDS)

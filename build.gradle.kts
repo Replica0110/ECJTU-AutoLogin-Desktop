@@ -16,15 +16,11 @@ repositories {
 }
 
 dependencies {
-    // Note, if you develop a library, you should use compose.desktop.common.
-    // compose.desktop.currentOs should be used in launcher-sourceSet
-    // (in a separate module for demo project and in testMain).
-    // With compose.desktop.common you will also lose @Preview functionality
     implementation(compose.desktop.currentOs)
     implementation(compose.material3)
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("io.github.moriafly:salt-ui-desktop:2.2.0-dev08")
-    implementation("com.russhwolf:multiplatform-settings:1.2.0")
+    implementation(libs.salt.ui.desktop)
+    implementation(libs.okhttp)
+    implementation(libs.multiplatform.setting)
 
 }
 apply(from = "wix.gradle.kts")

@@ -1,0 +1,12 @@
+[versions]
+okhttp = "4.12.0"
+salt-ui-desktop = "2.2.0-dev08"
+multiplatform-setting = "1.2.0"
+
+[libraries]
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp"}
+salt-ui-desktop = { module = "io.github.moriafly:salt-ui-desktop", version.ref = "salt-ui-desktop"}
+multiplatform-setting = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatform-setting"}
+
+[plugins]
+

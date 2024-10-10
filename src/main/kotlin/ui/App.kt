@@ -17,7 +17,7 @@ import com.lonx.ECJTUAutoLogin.Companion.autoStartUp
 import com.lonx.ECJTUAutoLogin.Companion.exit
 import com.lonx.ECJTUAutoLogin.Companion.loginIn
 import com.lonx.ECJTUAutoLogin.Companion.loginOut
-import com.lonx.utils.AutoStartUp
+import com.lonx.utils.AppLaunchManager
 import com.moriafly.salt.ui.*
 import com.russhwolf.settings.Settings
 
@@ -130,10 +130,10 @@ fun app(
                                     onChange = {
                                         autoStartUp.value = it
                                         if (autoStartUp.value) {
-                                            AutoStartUp.makeAutoStartUp()
+                                            AppLaunchManager.makeAutoStartUp()
                                             windowSub.value = "已设置开机自启"
                                         } else {
-                                            AutoStartUp.removeAutoStartUp()
+                                            AppLaunchManager.removeAutoStartUp()
                                             windowSub.value = "已关闭开机自启"
                                         } }
                                 )

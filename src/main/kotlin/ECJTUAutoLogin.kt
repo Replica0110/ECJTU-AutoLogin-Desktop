@@ -1,8 +1,6 @@
 package com.lonx
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,14 +31,14 @@ object AppSingleton {
     private val lockFile: Path = Path.of(System.getProperty("java.io.tmpdir"), "${ECJTUAutoLogin}.lock")
 
     init {
-        if (!createLockFileWithPid()) {
-            if (isAnotherInstanceRunning()) {
+        if (!appLock()) {
+            if (isAppRunning()) {
                 exitProcess(0)
             }
         }
     }
 
-    private fun createLockFileWithPid(): Boolean {  // 创建锁文件并写入进程PID
+    private fun appLock(): Boolean {  // 创建应用锁
         return try {
             Files.write(lockFile, "${ProcessHandle.current().pid()}\n".toByteArray(), StandardOpenOption.CREATE_NEW)
             true
@@ -48,7 +46,7 @@ object AppSingleton {
             false
         }
     }
-    private fun isAnotherInstanceRunning(): Boolean { // 检查锁文件是否正在被另一个进程占用
+    private fun isAppRunning(): Boolean { // 检查是否存在应用锁
         return try {
             val pid = Files.readAllLines(lockFile).first().toInt()
             ProcessHandle.of(pid.toLong()).isPresent && ProcessHandle.of(pid.toLong()).get().isAlive
@@ -56,7 +54,7 @@ object AppSingleton {
             false
         }
     }
-    fun releaseLock() {
+    fun releaseAppLock() { // 释放应用锁
         try {
             Files.deleteIfExists(lockFile)
         } catch (e: Exception) {
@@ -70,25 +68,26 @@ class ECJTUAutoLogin {
     companion object {
         var loginIn = mutableStateOf(true)
         var loginOut = mutableStateOf(false)
-        val autoStartUp = mutableStateOf(AutoStartUp.isAutoStartUp())
+        val autoStartUp = mutableStateOf(AppLaunchManager.isAutoStartUp())
         private var showWindow = mutableStateOf(true)
         private var windowSub = mutableStateOf("")
         private var studentId = mutableStateOf("")
         private var password = mutableStateOf("")
+        private var getIP = mutableStateOf(false)
         private var isp = mutableStateOf(1)
         private var showNotification = mutableStateOf(true)
         private val autoExit = mutableStateOf(false)
         private val loginService = LoginService()
-
         private fun initialize(settings: Settings) {
             studentId.value = settings.getString("id", "")
             password.value = settings.getString("pwd", "")
             isp.value = settings.getInt("isp", 1)
+            getIP.value = settings.getBoolean("getIP", false)
             showNotification.value = settings.getBoolean("notification", true)
         }
         // 退出并释放锁
         fun exit() {
-            AppSingleton.releaseLock()
+            AppSingleton.releaseAppLock()
             exitProcess(0)
         }
         @JvmStatic
@@ -166,6 +165,10 @@ class ECJTUAutoLogin {
                                 4 -> "网络已连接"
                                 else -> "连接的似乎不是校园网"
                             }
+                            if ((netState==4 || netState==3) && getIP.value) {
+                                val ip = loginService.getIp()
+                                loginService.copyToClipboard(ip)
+                            }
                         } catch (e: Exception) {
                                 windowSub.value = "登录失败，捕获到异常：$e"
                         }
@@ -217,16 +220,49 @@ class ECJTUAutoLogin {
                             onCheckedChange = {
                                 autoStartUp.value = it
                                 if (autoStartUp.value){
-                                    AutoStartUp.makeAutoStartUp()
+                                    AppLaunchManager.makeAutoStartUp()
                                     windowSub.value = "已设置开机自启"
                                 } else {
-                                    AutoStartUp.removeAutoStartUp()
+                                    AppLaunchManager.removeAutoStartUp()
                                     windowSub.value = "已关闭开机自启"
                                 }
                             },
                         )
+                        Menu(
+                            text = "调试选项",
+                            content = {
+                                Item(
+                                    text = "清空缓存",
+                                    onClick = {
+                                        GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
+                                            settings.clear()
+                                            windowSub.value = "已清空缓存"
+                                        }
+                                    }
+                                )
+//                                Item( // TODO 功能未实现
+//                                    text = "重启应用",
+//                                    onClick = {
+//                                        GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
+//                                            AppLaunchManager.restart { exitApplication() }
+//                                        }
+//                                    }
+//                                )
+                                CheckboxItem(
+                                    text = "自动获取并复制IP地址",
+                                    checked = getIP.value,
+                                    onCheckedChange = {
+                                        getIP.value = it
+                                        settings.apply {
+                                            putBoolean("getIP", getIP.value)
+                                        }
+                                    },
+                                )
+                            }
+                        )
                         Separator()
-                        Item(text = "退出",
+                        Item(
+                            text = "退出",
                             onClick = { exit() }
                         )
                     }
