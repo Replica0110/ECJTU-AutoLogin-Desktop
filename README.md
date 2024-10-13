@@ -1,5 +1,5 @@
 <div align="center">
-<img width="125" height="125" src="src/main/resources/icon.svg" alt="legado"/>  
+<img width="125" height="125" src="src/main/resources/icon.svg" alt="ecjtulogintool"/>  
 
 <h1>华交校园网工具桌面端</h1>
 
@@ -16,7 +16,7 @@
 3. 可以在主界面设置是否开启系统通知，以及开机自启，也可在托盘中设置
 4. 设置开机自启后，登录完成后应用会自动退出
 
-## Python脚本版
+## Python登录脚本
 
 1. 安装python并设置环境变量
 2. 安装依赖：

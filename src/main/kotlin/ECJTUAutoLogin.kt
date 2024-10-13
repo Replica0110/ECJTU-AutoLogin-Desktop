@@ -4,6 +4,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -12,9 +13,13 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.lonx.ui.app
-import com.lonx.utils.*
+import com.lonx.utils.AppLaunchManager
+import com.lonx.utils.LoginService
+import com.lonx.utils.MyTray
+import com.lonx.utils.rememberMyTrayState
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.awt.event.MouseEvent
@@ -78,6 +83,7 @@ class ECJTUAutoLogin {
         private var showNotification = mutableStateOf(true)
         private val autoExit = mutableStateOf(false)
         private val loginService = LoginService()
+        private var ip = mutableStateOf("unknown")
         private fun initialize(settings: Settings) {
             studentId.value = settings.getString("id", "")
             password.value = settings.getString("pwd", "")
@@ -98,9 +104,10 @@ class ECJTUAutoLogin {
             // 创建应用
             application {
                 val scrollState = remember { ScrollState(0) }
+                val coroutineScope = rememberCoroutineScope {Dispatchers.Default}
                 val trayState = rememberMyTrayState()
                 val settings: Settings = PreferencesSettings(Preferences.userNodeForPackage(ECJTUAutoLogin::class.java))
-                val trayIcon = painterResource("icon.svg")
+                val appIcon = painterResource("icon.svg")
                 initialize(settings)
                 // 如果包含自动退出参数，延迟10秒后自动退出
                 LaunchedEffect(Unit){
@@ -140,7 +147,7 @@ class ECJTUAutoLogin {
                     }
                 }
                 if (loginOut.value) {
-                    GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
+                    coroutineScope.launch {
                         try {
                             val netState = loginService.getState()
                             windowSub.value = when (netState) {
@@ -156,7 +163,7 @@ class ECJTUAutoLogin {
                     }
                 }
                 if (loginIn.value) {
-                    GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
+                    coroutineScope.launch {
                         try {
                             val netState = loginService.getState()
                             windowSub.value = when (netState) {
@@ -166,8 +173,8 @@ class ECJTUAutoLogin {
                                 else -> "连接的似乎不是校园网"
                             }
                             if ((netState==4 || netState==3) && getIP.value) {
-                                val ip = loginService.getIp()
-                                loginService.copyToClipboard(ip)
+                                ip.value = loginService.getIp()
+                                loginService.copyToClipboard(ip.value)
                             }
                         } catch (e: Exception) {
                                 windowSub.value = "登录失败，捕获到异常：$e"
@@ -177,9 +184,9 @@ class ECJTUAutoLogin {
                 }
                 // 创建系统托盘
                 MyTray(
-                    icon = trayIcon,
+                    icon = appIcon,
                     state = trayState,
-                    tooltip = "华交校园网登录",
+                    tooltip = "系统通知：${showNotification.value}\n开机自启：${autoStartUp.value}\nIP地址：${ip.value}",
                     onAction = {
                         showWindow.value = !showWindow.value
                     },
@@ -234,7 +241,7 @@ class ECJTUAutoLogin {
                                 Item(
                                     text = "清空缓存",
                                     onClick = {
-                                        GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
+                                        coroutineScope.launch {
                                             settings.clear()
                                             windowSub.value = "已清空缓存"
                                         }
@@ -243,13 +250,13 @@ class ECJTUAutoLogin {
 //                                Item( // TODO 功能未实现
 //                                    text = "重启应用",
 //                                    onClick = {
-//                                        GlobalCoroutineScopeImpl.ioCoroutineDispatcher.launch {
+//                                        coroutineScope.launch {
 //                                            AppLaunchManager.restart { exitApplication() }
 //                                        }
 //                                    }
 //                                )
                                 CheckboxItem(
-                                    text = "自动获取并复制IP地址",
+                                    text = "自动获取IP并复制",
                                     checked = getIP.value,
                                     onCheckedChange = {
                                         getIP.value = it

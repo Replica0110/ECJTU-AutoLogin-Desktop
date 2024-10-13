@@ -228,6 +228,7 @@ fun SaltInputDialog( // 账号输入框
                 ) {
                     popupMenuItems.forEachIndexed { index, item ->
                         Item(
+                            textColor = if (item == popupMenuSub) SaltTheme.colors.highlight else SaltTheme.colors.text,
                             text = item,
                             onClick = {
                                 popupMenuSub = item

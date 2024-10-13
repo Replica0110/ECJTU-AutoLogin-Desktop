@@ -33,8 +33,6 @@ compose.desktop {
             packageName = "ECJTULoginTool"
             packageVersion = "1.0.1"
             description = "华交校园网工具"
-            vendor = "Agines02"
-            copyright = "Copyright 2024 Agines02."
             windows{
                 shortcut=true
                 perUserInstall=false

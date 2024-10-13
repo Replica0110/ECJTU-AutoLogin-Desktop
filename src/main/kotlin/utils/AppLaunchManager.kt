@@ -1,7 +1,6 @@
 package com.lonx.utils
 
 import com.lonx.AppName
-import okio.Path
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
@@ -12,7 +11,7 @@ object AppLaunchManager {
     private const val SCRIPT = "start.bat"
     private val pid = ProcessHandle.current().pid()
     private val exePath = AppPathUtils.getAppExePath()
-    private val scriptPath = AppPathUtils.getAppResPath().resolve(SCRIPT)
+    private val scriptPath = AppPathUtils.getAppResPath().resolve("script").resolve(SCRIPT)
     fun restart(exitApplication: () -> Unit) {
         val command =
             listOf(
