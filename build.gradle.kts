@@ -34,6 +34,7 @@ compose.desktop {
             packageVersion = "1.0.1"
             description = "华交校园网工具"
             windows{
+                includeAllModules = true
                 shortcut=true
                 perUserInstall=false
                 upgradeUuid="13b76f0a-b6be-4ca8-a50b-d7a9732c63ff"
